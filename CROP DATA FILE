@@ -1,0 +1,50 @@
+library(RODBC)
+
+
+
+# Establish database connection
+
+dsn_driver <- "{IBM DB2 ODBC Driver}"
+dsn_database <- "bludb"            
+dsn_hostname <- "b0aebb68-94fa-46ec-a1fc-1c999edb6187.c3n41cmd0nqnrk39u98g.databases.appdomain.cloud" 
+dsn_port <- "31249"   
+dsn_protocol <- "TCPIP"            
+dsn_uid <- "zmf98041"       
+dsn_pwd <- "ysoZ11Qn2kaa9kRS"      
+dsn_security <- "ssl"
+
+conn_path <- paste("DRIVER=",dsn_driver,
+                  ";DATABASE=",dsn_database,
+                  ";HOSTNAME=",dsn_hostname,
+                  ";PORT=",dsn_port,
+                  ";PROTOCOL=",dsn_protocol,
+                  ";UID=",dsn_uid,
+                  ";PWD=",dsn_pwd,
+                  ";SECURITY=",dsn_security,        
+                    sep="")
+
+conn <- odbcDriverConnect(conn_path)
+conn
+
+
+
+# CREATE TABLE ON DB2 CALLED CROP_DATA:
+
+cropDataDF <- sqlQuery(conn, "CREATE TABLE CROP_DATA(CD_ID INT NOT NULL, YEAR VARCHAR(12) NOT NULL, CROP_TYPE VARCHAR(15) NOT NULL, GEO VARCHAR(25) NOT NULL, SEEDED_AREA INT NOT NULL, HARVESTED_AREA INT NOT NULL, PRODUCTION INT NOT NULL, AVG_YIELD INT NOT NULL, PRIMARY KEY(CD_ID))",
+                       errors = FALSE)      
+
+if (cropDataDF == -1){
+  cat ("An error has occurred.\n")
+  msg <- odbcGetErrMsg(conn)
+  print (msg)
+} else {
+  cat ("Table was created successfully.\n")}
+  
+  
+  
+# READ CSV FILE AND CREATE A DATAFRAME. AFTER THAT, UPLOAD THE DATAFRAME TO THE DATA BASE TABLE CALLED "CROP_DATA".
+
+
+cropData_DATAFRAME <- read.csv('/resources/data/samples/osb/Annual_Crop_Data.csv', header = TRUE)
+
+sqlSave(conn, cropData_DATAFRAME, "CROP_DATA", append = TRUE, fast = FALSE, rownames = FALSE, colnames = FALSE, verbose = FALSE)
